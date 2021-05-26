@@ -17,11 +17,12 @@ class Config(object):
     epoch_num = 200    #number of epoch 
     learning_rate = 0.01 #learning rate 
     alpha = 5 #penality parameter
+    beta = 0
     l1_ratio = 0 #l1 penality ratio
     batch_size = 20 #batch size
     cor = 0.3 #correlation threshod that select CpG sites for learning
     num_sites = 20000 #top high correlation site that selected for learning 
-    use_gpu = True  # use GPU or not
+    use_gpu = False  # use GPU or not
 
 
 class neural_network_CPFFN(nn.Module):
