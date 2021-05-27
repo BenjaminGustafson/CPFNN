@@ -25,17 +25,17 @@ class Config(object):
     use_gpu = False  # use GPU or not
 
 
-class neural_network_CPFFN(nn.Module):
+class neural_network_CPFNN(nn.Module):
     #initialize neural network structure
     def __init__(self, input_dim, hidden_dim,output_dim, indexes):
-        super(neural_network, self).__init__()
+        super(neural_network_CPFNN,self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim) #initialize first layer
         self.fc2 = nn.Linear(hidden_dim,output_dim) #initialize second layer
 
     #initialize weights
     def init_weights(self):
-        init.xavier_normal(self.fc1.weight) #initialize first layer weight Xavier initialization
-        init.xavier_normal(self.fc2.weight) #initialize second layer weight Xavier initialization
+        nn.init.xavier_normal(self.fc1.weight) #initialize first layer weight Xavier initialization
+        nn.init.xavier_normal(self.fc2.weight) #initialize second layer weight Xavier initialization
     
     #forward propogation
     def forward(self, x_in, corr, indexes, counter, apply_softmax=False):
