@@ -11,8 +11,8 @@ class Config(object):
     #Common dimentions (CpG sites) we used: 473034 303236 9607 8105 8195. 
     input_dim = 473034 #the number of biological makers
     hidden_dim = 200   #the number of neuros in hidden layer 
-    train_file_path = './../data/sample_training.csv' #training file path
-    test_file_path = './../data/sample_test.csv' #test file path
+    train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv' #training file path
+    test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv' #test file path
     output_dim = 1     #the output is the predicted age
     epoch_num = 200    #number of epoch 
     learning_rate = 0.01 #learning rate 
