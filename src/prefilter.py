@@ -13,8 +13,7 @@ class Config(object):
     #473034 303236 9607 8105 8195
     input_dim = 473034 
     hidden_dim = 100
-    path = '/data/zhanglab/lli1/methylation/'
-    
+
     train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
     #train_file_path = path+'after_correlation_0.3_except_dataset_0_4datasets_train.csv'
@@ -101,7 +100,7 @@ class Trainer(object):
         x_arr = x_arr.cpu().data.numpy()
         x_sz = len(x_arr)
 
-        print(np.sum(x_arr)/x_sz)
+        print("MAE = " , np.sum(x_arr)/x_sz)
 
 if torch.cuda.is_available():
     print("GPU is available to use!\n")
@@ -142,7 +141,7 @@ x_test = test[:,1:]
 y_test = test[:,0].reshape(-1,1)
 
 
-num_sites = [3000]
+num_sites = [20000]#was 3000
 
 
 for i in num_sites: 
@@ -158,7 +157,7 @@ for i in num_sites:
     y_test = sub_test[:,0].reshape(-1,1)
     
     for j in range(1):
-        print('trail', j)
+        print('trial', j)
         start = time.time()
         model = neural_network(input_dim=i,hidden_dim=200,output_dim=1, indexes = spearman_index).to(device)
 
@@ -167,7 +166,7 @@ for i in num_sites:
         for k in range(20):
             trainer.train_by_random(sub_train)
         end = time.time()
-        print((end-start)/60)
+        print("time elapsed (min) = ", (end-start)/60)
         trainer.test(x_test, y_test)
         output = model(x_test).data.numpy()
         np.savetxt('CPFNN_prediction1.txt', output,delimiter = ',')

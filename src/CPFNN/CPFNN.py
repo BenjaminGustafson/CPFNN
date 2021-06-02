@@ -136,13 +136,14 @@ class Trainer(object):
         #calculate mean absolute error of predicitons
         x = torch.cat([pred_test,y_test],1) 
         x_arr = x.cpu().data.numpy()
-        x_sz = len(x_arr)
+
         sum = 0
         for i in x_arr:
-            print(i[1],i[0],abs(i[1]-i[0]))
+            print("actual = ", i[1], ", predicted = ",i[0], ", error = ",abs(i[1]-i[0]))
             sum += abs(i[1]-i[0])
 
-        print(sum/x_sz)
+        mae = sum / len(x_arr)
+        print("MAE = ", mae)
 
 if torch.cuda.is_available():
     print("GPU is available to use!\n")
@@ -163,18 +164,18 @@ if opt.use_gpu and torch.cuda.is_available():
 else: 
     device = torch.device('cpu')
 
-#read in training data
+print("Reading training data")
 train = np.loadtxt(opt.train_file_path, skiprows=1, delimiter=',') 
-print("Finish read training set")
-#read in test data
+
+print("Reading test data")
 test = np.loadtxt(opt.test_file_path, skiprows=1, delimiter=',')
-print("Finish read test set")
+
 #calculate spearman and pearson correlation between CpG sites and age
 spearman_corr,pearson_corr = correlation.calculate_correlation(train) 
 
 #spearman: get index of correlation that above threshod and below threshold
 spearman_index = [x for x in range(len(spearman_corr)) if abs(spearman_corr[x])<opt.cor] #return all x that satisfy the if condition
-print(len(spearman_index))
+#print(len(spearman_index))
 spearman_complement_index = [x for x in range(len(spearman_corr)) if abs(spearman_corr[x])>opt.cor]
 #pearson: get index of correlation that above threshod and below threshold
 pearson_index = [x for x in range(len(pearson_corr)) if abs(pearson_corr[x])<opt.cor]
@@ -185,8 +186,8 @@ test = torch.from_numpy(test).float().to(device)
 spearman_corr = torch.from_numpy(spearman_corr).float().to(device)
 pearson_corr = torch.from_numpy(pearson_corr).float().to(device)
 
-print(train.shape)
-print(test.shape)
+print("Training data shape = ", train.shape)
+print("Test data shape = ", test.shape)
 
 #separate training/testing input features and labels
 x_train = train[:,1:]
@@ -197,9 +198,10 @@ y_test = test[:,0].reshape(-1,1)
 #build the neural network model
 model = neural_network_CPFNN(input_dim=opt.input_dim,hidden_dim=opt.hidden_dim,output_dim=opt.output_dim, indexes = spearman_index).to(device)
 
-#train the neural network model
+print("Training")
 trainer = Trainer(epoch=opt.epoch_num,model=model,batch_size=opt.batch_size)
 trainer.train_by_random(train, spearman_corr, spearman_index, spearman_complement_index, alpha =  opt.alpha, beta = opt.beta, l1_ratio =  opt.l1_ratio )
 #test the neural network model
+print("Testing")
 trainer.test(x_test, y_test, spearman_corr, spearman_index, spearman_complement_index)
 
