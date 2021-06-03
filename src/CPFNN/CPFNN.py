@@ -177,7 +177,7 @@ print("Training")
 start = time.time()
 trainer = Trainer(epoch=100,model=model,batch_size=50)
 for k in range(20):
-    trainer.train_by_random(sub_train)
+    trainer.train_by_random(train)
 end = time.time()
 print("time elapsed (min) = ", (end-start)/60)
 trainer.test(x_test, y_test)
