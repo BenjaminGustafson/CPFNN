@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
     print("Loading training data...")
     start = time.time()
-    skip = 705 if Config.debug else 0
+    skip = 715 if Config.debug else 0
     train = np.loadtxt(Config.train_file_path, skiprows=skip, delimiter=',')
     print(train.shape)
     end = time.time()
@@ -166,7 +166,7 @@ if __name__ == "__main__":
 
     print("Loading testing data...")
     start = time.time()
-    skip = 105 if Config.debug else 1
+    skip = 306 if Config.debug else 1
     test = np.loadtxt(Config.test_file_path, skiprows=skip, delimiter=',')
     print(test.shape)
     end = time.time()
@@ -180,7 +180,7 @@ if __name__ == "__main__":
     y_test = test[:,:1]
 
     # Load feature correlation, or calculate it
-    spearman_corr = calculate_correlation() if Config.recalc_corr(train) else np.load_text(Config.corr_path, delimiter = ',')
+    spearman_corr = calculate_correlation(train) if Config.recalc_corr else np.load_text(Config.corr_path, delimiter = ',')
 
     sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
 
