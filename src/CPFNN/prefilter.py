@@ -12,9 +12,9 @@ class Config(object):
     """stores the global variables"""
     train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
-    filter_size = 100
-    hidden_dim = 100
-    epoch = 50
+    filter_size = 20000
+    hidden_dim = 200
+    epoch = 100
     batch_size = 50
     features = 473034
     output_dim = 1
@@ -97,7 +97,7 @@ class Trainer(object):
                 # Update weights
                 self.optimizer.step()
                                 # Verbose
-            if ((t-1)%100==0):
+            if (t%20==0):
                 # Print the gredient
                 print ("epoch: {0:02d} | loss: {1:.2f} | acc: {2:.2f}".format(t, loss, acc / len(y_train)))
 
