@@ -10,42 +10,36 @@ import time
 
 class Config(object):
     """stores the global variables"""
-    input_dim = 473034
-    hidden_dim = 100
-    output_dim = 1
     train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
-    learning_rate = 0.01
+    filter_size = 100
+    hidden_dim = 100
+    features = 473034
+    epoch = 50
+    output_dim = 1
     use_gpu = True 
     """
     train_file_path -- path to the training data file
     test_file_path -- path to the testing data file
-    num_sites -- number of features that we select
-    epoch_num -- number of epochs of training, i.e. how long to train the model
-    input_dim -- number of input nodes
+    filter_size -- number of features that we keep
     hidden_dim -- number of nodes in the hidden layer 
-    cor -- threshod for selecting features  
-    learning_rate -- 
-    alpha --
-    beta --
-    l1_ratio --
-    batch_size --
+    epoch -- number of epochs of training, i.e. how long to train the model
+    features -- number of features before filtering
     use_gpu -- will use GPU if available
     """
 
 
 
-class CPFNN(nn.Module):
-    """The correlation pre-filtered neural network model."""
+class NeuralNet(nn.Module):
+    """A neural network model with 1 hidden layer"""
 
-    def __init__(self, input_dim, hidden_dim, output_dim, indexes):
+    def __init__(self, input_dim, hidden_dim, output_dim):
         """
         input_dim --
         hidden_dim --
         output_dim --
-        indexes -- 
         """
-        super(CPFNN, self).__init__()
+        super(NeuralNet, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim,output_dim)
         self.bn1 = nn.BatchNorm1d(hidden_dim)
@@ -55,8 +49,7 @@ class CPFNN(nn.Module):
         init.xavier_normal(self.fc2.weight)
         
     def forward(self, x_in, apply_softmax=False):
-        
-        a_1 = F.leaky_relu(self.fc1(x_in))  # activaton function added!
+        a_1 = F.leaky_relu(self.fc1(x_in))
         y_pred = F.leaky_relu(self.fc2(a_1))
         if apply_softmax:
             y_pred = F.softmax(y_pred, dim=1)
@@ -157,12 +150,14 @@ if __name__ == "__main__":
 
     # Slice data into features (x) and labels (y)
 
-    x_train = train[:,1:]
-    y_train = train[:,0].reshape(-1,1)
+    x_train = train[:,1:]  # exclude first column
+    y_train = train[:,:1]  # get first column
     x_test = test[:,1:]
-    y_test = test[:,0].reshape(-1,1)
+    y_test = test[:,:1]
 
     # Calculate feature correlation
+
+    print("Calculating feature correlation")
 
     spearman_corr = []
     for i in range(1, train.shape[1]):
@@ -170,25 +165,24 @@ if __name__ == "__main__":
 
     spearman_corr = np.array(spearman_corr)
 
-    sorted_corr = np.sort(abs(spearman_corr))[::-1]
-    np.savetxt('sorted_cpg_correlation.csv', sorted_corr, delimiter = ',')
+    sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
+    #np.savetxt('sorted_cpg_correlation.csv', sorted_corr, delimiter = ',')
 
-    
-
-    n = Config.num_sites
-
-    spearman_index = [x for x in range(len(spearman_corr)) if abs(spearman_corr[x])<sorted_corr[n]]
-    spearman_complement_index = [x+1 for x in range(len(spearman_corr)) if abs(spearman_corr[x])>sorted_corr[n]]
+    # filter indices that are above cutoff ??
+    cutoff = sorted_corr[Config.filter_size]
+    spearman_index = [x for x in range(len(spearman_corr)) if abs(spearman_corr[x])<cutoff]
+    spearman_complement_index = [x+1 for x in range(len(spearman_corr)) if abs(spearman_corr[x])>cutoff]
     spearman_complement_index.insert(0,0)
 
+    #filter data
     sub_train = train[:,spearman_complement_index]
     sub_test = test[:,spearman_complement_index]
     sub_train = torch.from_numpy(sub_train).float().to(device)
     sub_test = torch.from_numpy(sub_test).float().to(device)
     x_test = sub_test[:,1:]
-    y_test = sub_test[:,0].reshape(-1,1)
+    y_test = sub_test[:,:1]
     
-    model = CPFNN(input_dim=n,hidden_dim=Config.hidden_dim,output_dim=Config.output_dim, indexes = spearman_index).to(device)
+    model = NeuralNet(input_dim=Config.filter_size,hidden_dim=Config.hidden_dim,output_dim=Config.output_dim, indexes = spearman_index).to(device)
     trainer = Trainer(epoch=Config.epoch,model=model,batch_size=Config.batch_size)
 
     print("Training model")
