@@ -13,6 +13,7 @@ class Config(object):
     train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
     corr_path = '/data/zhanglab/bgustafs/InterpretableML/data/correlation.csv'
+    model_path = '/data/zhanglab/bgustafs/InterpretableML/data/model.pt'
     filter_size = 20000
     hidden_dim = 200
     epoch = 1000
@@ -21,6 +22,7 @@ class Config(object):
     output_dim = 1
     use_gpu = True
     recalc_corr = True
+    debug = True
     """
     train_file_path -- path to the training data file
     test_file_path -- path to the testing data file
@@ -30,6 +32,8 @@ class Config(object):
     batch_size -- 
     features -- number of features before filtering
     use_gpu -- will use GPU if available
+    recalc_corr -- recalculate spearman correlation, otherwise load from file
+    debug -- read only 2 lines from training and testing data
     """
 
 
@@ -154,13 +158,17 @@ if __name__ == "__main__":
 
     print("Loading training data...")
     start = time.time()
+    skip = 705 if Config.debug else 0
     train = np.loadtxt(Config.train_file_path, delimiter=',')
+    print(train.shape)
     end = time.time()
     print("Loaded training data. Time (min) = ", (end-start)/60)
 
     print("Loading testing data...")
     start = time.time()
+    skip = 105 if Config.debug else 1
     test = np.loadtxt(Config.test_file_path, skiprows=1, delimiter=',')
+    print(test.shape)
     end = time.time()
     print("Loaded testing data. Time (min) = ", (end-start)/60)
 
@@ -172,7 +180,7 @@ if __name__ == "__main__":
     y_test = test[:,:1]
 
     # Load feature correlation, or calculate it
-    spearman_corr = calculate_correlation() if Config.recalc_corr else np.load_text(Config.corr_path, delimiter = ',')
+    spearman_corr = calculate_correlation() if Config.recalc_corr(train) else np.load_text(Config.corr_path, delimiter = ',')
 
     sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
 
