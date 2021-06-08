@@ -14,8 +14,9 @@ class Config(object):
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
     filter_size = 100
     hidden_dim = 100
-    features = 473034
     epoch = 50
+    batch_size = 50
+    features = 473034
     output_dim = 1
     use_gpu = True 
     """
@@ -24,6 +25,7 @@ class Config(object):
     filter_size -- number of features that we keep
     hidden_dim -- number of nodes in the hidden layer 
     epoch -- number of epochs of training, i.e. how long to train the model
+    batch_size -- 
     features -- number of features before filtering
     use_gpu -- will use GPU if available
     """
@@ -157,11 +159,13 @@ if __name__ == "__main__":
 
     # Calculate feature correlation
 
-    print("Calculating feature correlation")
-
+    print("Calculating feature correlation....")
+    start = time.time()
     spearman_corr = []
     for i in range(1, train.shape[1]):
         spearman_corr.append(stats.spearmanr(train[:,0],train[:,i])[0])
+    end = time.time()
+    print("Done calculating coefficients. Time (min) = ", (end - start)/60)
 
     spearman_corr = np.array(spearman_corr)
 
@@ -185,7 +189,7 @@ if __name__ == "__main__":
     model = NeuralNet(input_dim=Config.filter_size,hidden_dim=Config.hidden_dim,output_dim=Config.output_dim).to(device)
     trainer = Trainer(epoch=Config.epoch,model=model,batch_size=Config.batch_size)
 
-    print("Training model")
+    print("Training model...")
     start = time.time()
     for k in range(20): #why???
         trainer.train_by_random(sub_train)
