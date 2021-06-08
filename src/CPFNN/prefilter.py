@@ -182,7 +182,7 @@ if __name__ == "__main__":
     x_test = sub_test[:,1:]
     y_test = sub_test[:,:1]
     
-    model = NeuralNet(input_dim=Config.filter_size,hidden_dim=Config.hidden_dim,output_dim=Config.output_dim, indexes = spearman_index).to(device)
+    model = NeuralNet(input_dim=Config.filter_size,hidden_dim=Config.hidden_dim,output_dim=Config.output_dim).to(device)
     trainer = Trainer(epoch=Config.epoch,model=model,batch_size=Config.batch_size)
 
     print("Training model")
