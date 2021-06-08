@@ -12,13 +12,15 @@ class Config(object):
     """stores the global variables"""
     train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
+    corr_path = '/data/zhanglab/bgustafs/InterpretableML/data/correlation.csv'
     filter_size = 20000
     hidden_dim = 200
-    epoch = 100
+    epoch = 1000
     batch_size = 50
     features = 473034
     output_dim = 1
-    use_gpu = True 
+    use_gpu = True
+    recalc_corr = True
     """
     train_file_path -- path to the training data file
     test_file_path -- path to the testing data file
@@ -117,6 +119,18 @@ class Trainer(object):
 
         print("MAE = " , np.sum(x_arr)/x_sz)
 
+def calculate_correlation(train):
+    print("Calculating feature correlation....")
+    start = time.time()
+    spearman_corr = []
+    for i in range(1, train.shape[1]):
+        spearman_corr.append(stats.spearmanr(train[:,0],train[:,i])[0])
+    end = time.time()
+    print("Done calculating correlation. Time (min) = ", (end - start)/60)
+
+    spearman_corr = np.array(spearman_corr)
+    np.savetxt(Config.corr_path, spearman_corr, delimiter = ',')
+
 #Code run when executed, but not when imported
 if __name__ == "__main__":
 
@@ -157,20 +171,10 @@ if __name__ == "__main__":
     x_test = test[:,1:]
     y_test = test[:,:1]
 
-    # Calculate feature correlation
-
-    print("Calculating feature correlation....")
-    start = time.time()
-    spearman_corr = []
-    for i in range(1, train.shape[1]):
-        spearman_corr.append(stats.spearmanr(train[:,0],train[:,i])[0])
-    end = time.time()
-    print("Done calculating coefficients. Time (min) = ", (end - start)/60)
-
-    spearman_corr = np.array(spearman_corr)
+    # Load feature correlation, or calculate it
+    spearman_corr = calculate_correlation() if Config.recalc_corr else np.load_text(Config.corr_path, delimiter = ',')
 
     sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
-    #np.savetxt('sorted_cpg_correlation.csv', sorted_corr, delimiter = ',')
 
     # filter indices that are above cutoff ??
     cutoff = sorted_corr[Config.filter_size]
@@ -191,8 +195,7 @@ if __name__ == "__main__":
 
     print("Training model...")
     start = time.time()
-    for k in range(20): #why???
-        trainer.train_by_random(sub_train)
+    trainer.train_by_random(sub_train)
     end = time.time()
     print("Done training. Time (min) = ", (end-start)/60)
 
