@@ -130,7 +130,7 @@ spearman_corr = np.array(spearman_corr)
 print('Finish read corr')
 
 sorted_corr = np.sort(abs(spearman_corr))[::-1]
-
+np.savetxt('sorted_cpg_correlation.csv', sorted_corr, delimiter = ',')
 
 print(train.shape)
 print(test.shape)
@@ -162,11 +162,12 @@ for i in num_sites:
         model = neural_network(input_dim=i,hidden_dim=200,output_dim=1, indexes = spearman_index).to(device)
 
 
-        trainer = Trainer(epoch=100,model=model,batch_size=50)
+        trainer = Trainer(epoch=200,model=model,batch_size=50)
         for k in range(20):
             trainer.train_by_random(sub_train)
         end = time.time()
+        torch.save(model.state_dict(), "model.pt")
         print("time elapsed (min) = ", (end-start)/60)
         trainer.test(x_test, y_test)
-        output = model(x_test).data.numpy()
-        np.savetxt('CPFNN_prediction1.txt', output,delimiter = ',')
+        #output = model(x_test).data.numpy()
+        #np.savetxt('CPFNN_prediction1.txt', output,delimiter = ',')
