@@ -134,6 +134,7 @@ def calculate_correlation(train):
 
     spearman_corr = np.array(spearman_corr)
     np.savetxt(Config.corr_path, spearman_corr, delimiter = ',')
+    return spearman_corr
 
 #Code run when executed, but not when imported
 if __name__ == "__main__":
