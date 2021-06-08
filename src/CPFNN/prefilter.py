@@ -15,14 +15,14 @@ class Config(object):
     corr_path = '/data/zhanglab/bgustafs/InterpretableML/data/correlation.csv'
     model_path = '/data/zhanglab/bgustafs/InterpretableML/data/model.pt'
     filter_size = 20000
-    hidden_dim = 200
-    epoch = 1000
+    hidden_dim = 100
+    epoch = 200
     batch_size = 50
     features = 473034
     output_dim = 1
     use_gpu = True
-    recalc_corr = True
-    debug = True
+    recalc_corr = False
+    debug = False
     """
     train_file_path -- path to the training data file
     test_file_path -- path to the testing data file
@@ -181,7 +181,7 @@ if __name__ == "__main__":
     y_test = test[:,:1]
 
     # Load feature correlation, or calculate it
-    spearman_corr = calculate_correlation(train) if Config.recalc_corr else np.load_text(Config.corr_path, delimiter = ',')
+    spearman_corr = calculate_correlation(train) if Config.recalc_corr else np.loadtxt(Config.corr_path, delimiter = ',')
 
     sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
 
