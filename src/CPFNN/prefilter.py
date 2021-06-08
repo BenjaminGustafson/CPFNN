@@ -8,23 +8,39 @@ import torch.nn.functional as F
 import torch.optim as optim
 import time
 
-# settings
+"""
+Config: 
+
+contains global variables
+"""
 class Config(object):
-    #473034 303236 9607 8105 8195
     input_dim = 473034 
     hidden_dim = 100
-
     train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
-    #train_file_path = path+'after_correlation_0.3_except_dataset_0_4datasets_train.csv'
-    #test_file_path = path+'after_correlation_0.3dataset_0_4datasets_test.csv'
-    use_gpu = True  # use GPU or not
+    learning_rate = 0.01
+    use_gpu = True 
+    """
+    train_file_path : path to the training data file
+    test_file_path : path to the testing data file
+    num_sites : number of features that we select
+    epoch_num : number of epochs of training, i.e. how long to train the model
+    input_dim : number of input nodes
+    hidden_dim : number of nodes in the hidden layer 
+    cor : threshod for selecting features  
+    learning_rate : 
+    alpha :
+    beta :
+    l1_ratio :
+    batch_size :
+    use_gpu : will use GPU if available
+    """
 
 
 # Multilayer Perceptron 
-class neural_network(nn.Module):
+class cpfnn(nn.Module):
     def __init__(self, input_dim, hidden_dim,output_dim, indexes):
-        super(neural_network, self).__init__()
+        super(cpfnn, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim,output_dim)
         self.bn1 = nn.BatchNorm1d(hidden_dim)
@@ -102,72 +118,74 @@ class Trainer(object):
 
         print("MAE = " , np.sum(x_arr)/x_sz)
 
-if torch.cuda.is_available():
-    print("GPU is available to use!\n")
-else:
-    print("GPU is not available to use.\n")
 
-opt = Config()
+if __name__ == "__main__":
+    if torch.cuda.is_available():
+        print("GPU is available to use!\n")
+    else:
+        print("GPU is not available to use.\n")
 
-
-device = None
-if opt.use_gpu and torch.cuda.is_available():
-    device = torch.device('cuda')  
-    torch.set_default_tensor_type('torch.cuda.FloatTensor')
-else: 
-    device = torch.device('cpu')
-
-train = np.loadtxt(opt.train_file_path, delimiter=',')
-print("Finish read training set")
-test = np.loadtxt(opt.test_file_path, skiprows=1, delimiter=',')
-print("Finish read test set")
-spearman_corr = []
-for i in range(1, train.shape[1]):
-    spearman_corr.append(stats.spearmanr(train[:,0],train[:,i])[0])
-
-spearman_corr = np.array(spearman_corr)
-
-print('Finish read corr')
-
-sorted_corr = np.sort(abs(spearman_corr))[::-1]
-np.savetxt('sorted_cpg_correlation.csv', sorted_corr, delimiter = ',')
-
-print(train.shape)
-print(test.shape)
-
-x_train = train[:,1:]
-y_train = train[:,0].reshape(-1,1)
-x_test = test[:,1:]
-y_test = test[:,0].reshape(-1,1)
+    opt = Config()
 
 
-num_sites = [20000]#was 3000
+    device = None
+    if opt.use_gpu and torch.cuda.is_available():
+        device = torch.device('cuda')  
+        torch.set_default_tensor_type('torch.cuda.FloatTensor')
+    else: 
+        device = torch.device('cpu')
+
+    train = np.loadtxt(opt.train_file_path, delimiter=',')
+    print("Finish read training set")
+    test = np.loadtxt(opt.test_file_path, skiprows=1, delimiter=',')
+    print("Finish read test set")
+    spearman_corr = []
+    for i in range(1, train.shape[1]):
+        spearman_corr.append(stats.spearmanr(train[:,0],train[:,i])[0])
+
+    spearman_corr = np.array(spearman_corr)
+
+    print('Finish read corr')
+
+    sorted_corr = np.sort(abs(spearman_corr))[::-1]
+    np.savetxt('sorted_cpg_correlation.csv', sorted_corr, delimiter = ',')
+
+    print(train.shape)
+    print(test.shape)
+
+    x_train = train[:,1:]
+    y_train = train[:,0].reshape(-1,1)
+    x_test = test[:,1:]
+    y_test = test[:,0].reshape(-1,1)
 
 
-for i in num_sites: 
-    spearman_index = [x for x in range(len(spearman_corr)) if abs(spearman_corr[x])<sorted_corr[i]]
-    spearman_complement_index = [x+1 for x in range(len(spearman_corr)) if abs(spearman_corr[x])>sorted_corr[i]]
-    spearman_complement_index.insert(0,0)
-    print(len(spearman_complement_index))
-    sub_train = train[:,spearman_complement_index]
-    sub_test = test[:,spearman_complement_index]
-    sub_train = torch.from_numpy(sub_train).float().to(device)
-    sub_test = torch.from_numpy(sub_test).float().to(device)
-    x_test = sub_test[:,1:]
-    y_test = sub_test[:,0].reshape(-1,1)
-    
-    for j in range(1):
-        print('trial', j)
-        start = time.time()
-        model = neural_network(input_dim=i,hidden_dim=200,output_dim=1, indexes = spearman_index).to(device)
+    num_sites = [20000]#was 3000
 
 
-        trainer = Trainer(epoch=200,model=model,batch_size=50)
-        for k in range(20):
-            trainer.train_by_random(sub_train)
-        end = time.time()
-        torch.save(model.state_dict(), "model.pt")
-        print("time elapsed (min) = ", (end-start)/60)
-        trainer.test(x_test, y_test)
-        #output = model(x_test).data.numpy()
-        #np.savetxt('CPFNN_prediction1.txt', output,delimiter = ',')
+    for i in num_sites: 
+        spearman_index = [x for x in range(len(spearman_corr)) if abs(spearman_corr[x])<sorted_corr[i]]
+        spearman_complement_index = [x+1 for x in range(len(spearman_corr)) if abs(spearman_corr[x])>sorted_corr[i]]
+        spearman_complement_index.insert(0,0)
+        print(len(spearman_complement_index))
+        sub_train = train[:,spearman_complement_index]
+        sub_test = test[:,spearman_complement_index]
+        sub_train = torch.from_numpy(sub_train).float().to(device)
+        sub_test = torch.from_numpy(sub_test).float().to(device)
+        x_test = sub_test[:,1:]
+        y_test = sub_test[:,0].reshape(-1,1)
+        
+        for j in range(1):
+            print('trial', j)
+            start = time.time()
+            model = cpfnn(input_dim=i,hidden_dim=200,output_dim=1, indexes = spearman_index).to(device)
+
+
+            trainer = Trainer(epoch=200,model=model,batch_size=50)
+            for k in range(20):
+                trainer.train_by_random(sub_train)
+            end = time.time()
+            torch.save(model.state_dict(), "model.pt")
+            print("time elapsed (min) = ", (end-start)/60)
+            trainer.test(x_test, y_test)
+            #output = model(x_test).data.numpy()
+            #np.savetxt('CPFNN_prediction1.txt', output,delimiter = ',')
