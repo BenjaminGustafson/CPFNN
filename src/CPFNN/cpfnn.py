@@ -136,6 +136,47 @@ def calculate_correlation(train):
     np.savetxt(Config.corr_path, spearman_corr, delimiter = ',')
     return spearman_corr
 
+def load_training_data():
+    print("Loading training data...")
+    start = time.time()
+    skip = 715 if Config.debug else 0
+    train = np.loadtxt(Config.train_file_path, skiprows=skip, delimiter=',')
+    print("shape = ", train.shape)
+    end = time.time()
+    print("Loaded training data. Time (min) = ", (end-start)/60)
+    return train
+
+def load_testing_data():
+    print("Loading testing data...")
+    start = time.time()
+    skip = 306 if Config.debug else 1
+    test = np.loadtxt(Config.test_file_path, skiprows=skip, delimiter=',')
+    print("shape = ", test.shape)
+    end = time.time()
+    print("Loaded testing data. Time (min) = ", (end-start)/60)
+    return test
+
+def get_filtered_indices(filter_size = Config.filter_size, recalc_corr = Config.recalc_corr, corr_path = Config.corr_path):
+    # Load feature correlation, or calculate it
+    spearman_corr = calculate_correlation(train) if recalc_corr else np.loadtxt(corr_path, delimiter = ',')
+
+    sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
+
+    # filter indices with correlation above cutoff
+    cutoff = sorted_corr[filter_size]
+    spearman_indices = [x+1 for x in range(len(spearman_corr)) if abs(spearman_corr[x])>cutoff]
+    spearman_indices.insert(0,0)
+    return spearman_indices
+
+def filter_data(data, indices):
+    return data[:,indices]
+    
+def slice_data(data):
+    features = data[:,1:]
+    labels = data[:,:1]
+    return features, labels
+
+
 #Code run when executed, but not when imported
 if __name__ == "__main__":
 
@@ -157,48 +198,22 @@ if __name__ == "__main__":
 
     # Load data
 
-    print("Loading training data...")
-    start = time.time()
-    skip = 715 if Config.debug else 0
-    train = np.loadtxt(Config.train_file_path, skiprows=skip, delimiter=',')
-    print(train.shape)
-    end = time.time()
-    print("Loaded training data. Time (min) = ", (end-start)/60)
+    train = load_training_data()
+    test  = load_testing_data()    
 
-    print("Loading testing data...")
-    start = time.time()
-    skip = 306 if Config.debug else 1
-    test = np.loadtxt(Config.test_file_path, skiprows=skip, delimiter=',')
-    print(test.shape)
-    end = time.time()
-    print("Loaded testing data. Time (min) = ", (end-start)/60)
-
-    # Slice data into features (x) and labels (y)
-
-    x_train = train[:,1:]  # exclude first column
-    y_train = train[:,:1]  # get first column
-    x_test = test[:,1:]
-    y_test = test[:,:1]
-
-    # Load feature correlation, or calculate it
-    spearman_corr = calculate_correlation(train) if Config.recalc_corr else np.loadtxt(Config.corr_path, delimiter = ',')
-
-    sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
-
-    # filter indices that are above cutoff ??
-    cutoff = sorted_corr[Config.filter_size]
-    spearman_index = [x for x in range(len(spearman_corr)) if abs(spearman_corr[x])<cutoff]
-    spearman_complement_index = [x+1 for x in range(len(spearman_corr)) if abs(spearman_corr[x])>cutoff]
-    spearman_complement_index.insert(0,0)
+    filtered_indices = get_filtered_indices()
 
     #filter data
-    sub_train = train[:,spearman_complement_index]
-    sub_test = test[:,spearman_complement_index]
+
+    sub_train = filter_data(train, filtered_indices)
+    sub_test = filter_data(test, filtered_indices)
     sub_train = torch.from_numpy(sub_train).float().to(device)
     sub_test = torch.from_numpy(sub_test).float().to(device)
-    x_test = sub_test[:,1:]
-    y_test = sub_test[:,:1]
-    
+
+    x_test, y_test = slice_data(sub_test)
+
+    # Train model
+
     model = NeuralNet(input_dim=Config.filter_size,hidden_dim=Config.hidden_dim,output_dim=Config.output_dim).to(device)
     trainer = Trainer(epoch=Config.epoch,model=model,batch_size=Config.batch_size)
 
@@ -215,5 +230,7 @@ if __name__ == "__main__":
     # Output model
      
     torch.save(model.state_dict(), Config.model_path)
+
+    # Output prediction
     #output = model(x_test).data.numpy()
     #np.savetxt('CPFNN_prediction1.txt', output,delimiter = ',')
