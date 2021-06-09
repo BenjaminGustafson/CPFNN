@@ -1,10 +1,9 @@
 import sys; sys.path.append('..')
 import torch
-import CPFNN.prefilter as prefilter
+import CPFNN.cpfnn as cpfnn
 
-model_path = '../../data/model.pt'
-config = prefilter.Config
-model = prefilter.NeuralNet(input_dim=config.filter_size,hidden_dim=config.hidden_dim,output_dim=config.output_dim)
+model_path = '../../data/model01.pt'
+model = cpfnn.NeuralNet(input_dim=3000,hidden_dim=200,output_dim=1)
 model.load_state_dict(torch.load(model_path))
 model.eval()
 
