@@ -124,6 +124,15 @@ class Trainer(object):
         print("MAE = " , np.sum(x_arr)/x_sz)
 
 def calculate_correlation(train):
+    """Caculates the spearman correlation each feature and the label.  
+
+    Args: 
+        train: The training data. A 2D array where rows are data points, the first column is 
+        the labels, and the rest are feature values.
+
+    Returns:
+        A 1D array containing the spearman correlation of each data point in the training data.
+    """
     print("Calculating feature correlation....")
     start = time.time()
     spearman_corr = []
@@ -156,15 +165,16 @@ def load_testing_data():
     print("Loaded testing data. Time (min) = ", (end-start)/60)
     return test
 
-def get_filtered_indices(filter_size = Config.filter_size, recalc_corr = Config.recalc_corr, corr_path = Config.corr_path):
+def get_filtered_indices(filter_size = Config.filter_size, recalc_corr = Config.recalc_corr, corr_path = Config.corr_path, filter_start = 0):
     # Load feature correlation, or calculate it
     spearman_corr = calculate_correlation(train) if recalc_corr else np.loadtxt(corr_path, delimiter = ',')
 
     sorted_corr = np.sort(abs(spearman_corr))[::-1] # descending
 
     # filter indices with correlation above cutoff
-    cutoff = sorted_corr[filter_size]
-    spearman_indices = [x+1 for x in range(len(spearman_corr)) if abs(spearman_corr[x])>cutoff]
+    start = sorted_corr[filter_start]
+    end = sorted_corr[filter_start + filter_size]
+    spearman_indices = [x+1 for x in range(len(spearman_corr)) if end < abs(spearman_corr[x]) < start]
     spearman_indices.insert(0,0)
     return spearman_indices
 
@@ -172,6 +182,7 @@ def filter_data(data, indices):
     return data[:,indices]
     
 def slice_data(data):
+    """ Splits a dataset into columns 2+ (features) and column 1 (labels)."""
     features = data[:,1:]
     labels = data[:,:1]
     return features, labels
