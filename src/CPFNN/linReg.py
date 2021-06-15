@@ -29,9 +29,10 @@ def test_model(model, x_test, y_test):
     mae = abs_err.mean()
     print('MAE {}'.format(mae))
 
-
+print('Loading training data (5 min)')
 train_data = np.loadtxt('/data/zhanglab/lli1/methylation/train_combat.csv', delimiter=',')
-test_data = np.loadtxt('/data/zhanglab/lli1/methylation/test_combat.csv', delimiter=',')
+print('Loading testing data (2 min)')
+test_data = np.loadtxt('/data/zhanglab/lli1/methylation/test_combat.csv', skiprows=1, delimiter=',')
 corr = np.loadtxt('/data/zhanglab/bgustafs/data/correlation.csv', delimiter=',')
 
 x_train = train_data[:,1:]
