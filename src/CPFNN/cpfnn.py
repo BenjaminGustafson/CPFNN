@@ -13,11 +13,11 @@ class Config(object):
     train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
     test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
     corr_path = '../../data/correlation.csv'
-    model_path = '../../data/model02.pt'
-    filter_size = 3000
-    hidden_dim = 200
+    model_path = '../../data/model00.pt'
+    filter_size = 20000
+    hidden_dim = 100
     epoch = 2000
-    batch_size = 50
+    batch_size = 20
     features = 473034
     output_dim = 1
     use_gpu = True
@@ -120,7 +120,11 @@ class Trainer(object):
         x_arr = torch.abs(torch.sub(pred_test,y_test))
         x_arr = x_arr.cpu().data.numpy()
         x_sz = len(x_arr)
-
+        rss = torch.sum(torch.sub(pred_test, y_test) ** 2)
+        y_mean = torch.mean(y_test)
+        tss = torch.sum(torch.sub(y_test, y_mean) ** 2)
+        print("RSS = ", rss)
+        print("R^2 = ", 1-rss/tss)
         print("MAE = " , np.sum(x_arr)/x_sz)
 
 def calculate_correlation(train):
@@ -174,7 +178,7 @@ def get_filtered_indices(filter_size = Config.filter_size, recalc_corr = Config.
     # filter indices with correlation above cutoff
     start = sorted_corr[filter_start]
     end = sorted_corr[filter_start + filter_size]
-    spearman_indices = [x+1 for x in range(len(spearman_corr)) if end < abs(spearman_corr[x]) < start]
+    spearman_indices = [x+1 for x in range(len(spearman_corr)) if end < abs(spearman_corr[x]) <= start]
     spearman_indices.insert(0,0)
     return spearman_indices
 
