@@ -17,7 +17,7 @@ model_path = '../../data/model00.pt'
 
 class LinearRegression(nn.Module):
     def __init__(self, input_dim, output_dim):
-        super(NeuralNet, self).__init__()
+        super(LinearRegression, self).__init__()
         self.linear = nn.Linear(input_dim, output_dim)
         
     def forward(self, x_in):
@@ -139,7 +139,7 @@ def load_training_data():
 def load_testing_data():
     print("Loading testing data...")
     start = time.time()
-    test = np.loadtxt(test_file_path, delimiter=',')
+    test = np.loadtxt(test_file_path, skiprows=1, delimiter=',')
     print("shape = ", test.shape)
     end = time.time()
     print("Loaded testing data. Time (min) = ", (end-start)/60)
