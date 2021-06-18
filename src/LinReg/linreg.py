@@ -4,7 +4,7 @@ import math
 
 class LinearRegression:
     def fit(self, X, y, method, learning_rate=0.01, iterations=500, batch_size=32):
-        X, y = torch.from_numpy(X), torch.from_numpy(y)
+        X, y = torch.from_numpy(X).float(), torch.from_numpy(y).float()
         X = torch.cat([(X), torch.ones_like(y)], dim=1)
         rows, cols = X.size()
         if method == 'solve':
@@ -42,7 +42,7 @@ class LinearRegression:
         return self
     
     def predict(self, X):
-        X = torch.from_numpy(X)
+        X = torch.from_numpy(X).float()
         if not hasattr(self, 'weights'):
             print('Cannot predict. You should call the .fit() method first.')
             return
@@ -56,7 +56,7 @@ class LinearRegression:
         return torch.matmul(X, self.weights)
     
     def rmse(self, X, y):
-        y = torch.from_numpy(y)
+        y = torch.from_numpy(y).float()
         y_hat = self.predict(X)
         
         if y_hat is None:

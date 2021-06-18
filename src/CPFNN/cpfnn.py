@@ -12,7 +12,6 @@ import time
 train_file_path = '/data/zhanglab/lli1/methylation/train_combat.csv'
 test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
 corr_path = '../../data/correlation.csv'
-model_path = '../../data/model00.pt'
 
 
 class LinearRegression(nn.Module):
@@ -177,7 +176,8 @@ def train_and_test_NN(input_dim, hidden_dim, epochs, batch_size):#TODO add multi
     model = NeuralNet(input_dim,hidden_dim,1)
     trainer = Trainer(epochs,model,batch_size)
     trainer.train_by_random(sub_train)
-    return trainer.test(x_test, y_test)
+    mae, r2 = trainer.test(x_test,y_test)
+    return model, mae, r2
 
 def train_and_test_Linear(input_dim, epochs, batch_size):
     indices = get_filtered_indices(input_dim)
@@ -189,4 +189,5 @@ def train_and_test_Linear(input_dim, epochs, batch_size):
     model = LinearRegression(input_dim,1)
     trainer = Trainer(epochs,model,batch_size)
     trainer.train_by_random(sub_train)
-    return trainer.test(x_test, y_test)
+    mae, r2 = trainer.test(x_test,y_test)
+    return model, mae, r2

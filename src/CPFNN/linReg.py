@@ -6,15 +6,15 @@ class LinearRegression(torch.nn.Module):
         super(LinearRegression, self).__init__()
         self.linear = torch.nn.Linear(input_dim,output_dim)
     
-    def forward(x): 
+    def forward(self, x): 
         return self.linear(x)
 
 def train_model(model, epochs, x_train, y_train, learningRate = 0.01):
     criterion = torch.nn.MSELoss() 
     optimizer = torch.optim.SGD(model.parameters(), lr=learningRate)
     for epoch in range(epochs):
-        inputs = torch.from_numpy(x_train)
-        labels = torch.from_numpy(y_train)
+        inputs = torch.from_numpy(x_train).float()
+        labels = torch.from_numpy(y_train).float()
         optimizer.zero_grad()
         outputs = model(inputs)
         loss = criterion(outputs, labels)
@@ -33,7 +33,7 @@ print('Loading training data (5 min)')
 train_data = np.loadtxt('/data/zhanglab/lli1/methylation/train_combat.csv', delimiter=',')
 print('Loading testing data (2 min)')
 test_data = np.loadtxt('/data/zhanglab/lli1/methylation/test_combat.csv', skiprows=1, delimiter=',')
-corr = np.loadtxt('/data/zhanglab/bgustafs/data/correlation.csv', delimiter=',')
+corr = np.loadtxt('/data/zhanglab/bgustafs/InterpretableML/data/correlation.csv', delimiter=',')
 
 x_train = train_data[:,1:]
 y_train = train_data[:,0]
@@ -45,4 +45,3 @@ weighted_test = np.matmul(x_test, corr)
 #combined_test = np.stack((y_test, weighted_test), axis = 1)
 
 model = LinearRegression(1,1)
-train_model(model, 1000, weighted_train, y_train)
