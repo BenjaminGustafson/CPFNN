@@ -97,7 +97,7 @@ class Trainer(object):
         rss = torch.sum(torch.sub(pred_test, y_test) ** 2)
         y_mean = torch.mean(y_test)
         tss = torch.sum(torch.sub(y_test, y_mean) ** 2)
-        rsquared = 1-rss/tss
+        rsquared = (1-rss/tss).item()
         
         print ("MAE = {} R^2 = {}".format(mae, rsquared))
 
@@ -166,7 +166,7 @@ def slice_data(data):
 train = load_training_data()
 test  = load_testing_data()
 
-def train_and_test(model_type, input_dim, hidden_dim = 200, epochs = 2000, increment=100, batch_size=20):#TODO add multiple layers
+def train_and_test(model_type, input_dim, hidden_dim = 200, epochs = 2000, increment=100, batch_size=20, early_stop = True, stop=0.001):#TODO add multiple layers
     """
     Trains a neural network and outputs the model and accuracy.
 
@@ -195,9 +195,18 @@ def train_and_test(model_type, input_dim, hidden_dim = 200, epochs = 2000, incre
     trainer = Trainer(increment,model,batch_size)
     maes = []
     r2s = []
-    for i in range(epochs//increment):
+    def train_helper(): 
         trainer.train_by_random(sub_train)
         mae, r2 = trainer.test(sub_test)
         maes.append(mae)
         r2s.append(r2)
+    if early_stop:
+        flag = True
+        while flag:
+            train_helper()
+            if len(maes) >= 2 and maes[-2] - maes[-1] < stop:
+                flag = False
+    else:
+        for i in range(epochs//increment):
+            train_helper()
     return model, maes, r2s
