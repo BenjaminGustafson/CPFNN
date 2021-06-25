@@ -3,11 +3,14 @@ import matplotlib.pyplot as plt
 import math
 
 class LinearRegression:
-    def fit(self, X, y, method, learning_rate=0.01, iterations=500, batch_size=32):
+    def fit(self, X, y, method, learning_rate=0.01, iterations=500, batch_size=32, lambda = 0.01):
         X, y = torch.from_numpy(X).float(), torch.from_numpy(y).float()
         X = torch.cat([(X), torch.ones_like(y)], dim=1)
         rows, cols = X.size()
         if method == 'solve':
+            """
+            weights = (X^T X)^-1 X^T y
+            """
             if rows >= cols == torch.matrix_rank(X):
                 self.weights = torch.matmul(
                     torch.matmul(
@@ -19,6 +22,15 @@ class LinearRegression:
                     y)
             else:
                 print('X has not full column rank. method=\'solve\' cannot be used.')
+        if method == 'ridge':
+            """
+            weights = (X^T X + k I_d)^-1 X^T y
+            """
+            if rows >= cols == torch.matrix_rank(X):
+                self.weights = torch.matmul(torch.matmul(torch.inverse(torch.add(torch.matmul(torch.transpose(X, 0, 1),X),torch.mul(torch.eye(cols,cols),lambda))),torch.transpose(X, 0, 1),y))
+            #line too long^
+            else:
+                print('X has not full column rank. method=\'ridge\' cannot be used.')
         elif method == 'sgd':
             self.weights = torch.normal(mean=0, std=1/cols, size=(cols, 1), dtype=torch.float64)
             for i in range(iterations):
