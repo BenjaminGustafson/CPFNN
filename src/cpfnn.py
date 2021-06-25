@@ -1,3 +1,13 @@
+"""
+cpfnn.py
+
+Contains the classes NeuralNetwork and LinearNeuralNetwork for models,
+and the Trainer class for training those models. Contains methods
+for loading training and testing data, and correlation coefficients.
+Contains methods for training and testing the models.
+
+A linear regression model with other training methods can be found in linreg.py.
+"""
 import pandas as pd
 import torch 
 import numpy as np
@@ -13,15 +23,21 @@ test_file_path = '/data/zhanglab/lli1/methylation/test_combat.csv'
 corr_path = '../data/correlation.csv'
 
 
-class LinearRegression(nn.Module):
+class LinearNeuralNet(nn.Module):
+    """
+    A neural network with no hidden layers. Equivalent to linear regression.
+    """
     def __init__(self, input_dim, output_dim):
-        super(LinearRegression, self).__init__()
+        super(LinearNeuralNet, self).__init__()
         self.linear = nn.Linear(input_dim, output_dim)
         
     def forward(self, x_in):
         return self.linear(x_in)
 
 class NeuralNet(nn.Module):
+    """
+    A neural network with one hidden layer. Uses the leaky RELU activation function.
+    """
     def __init__(self, input_dim, hidden_dim, output_dim):
         super(NeuralNet, self).__init__()
         self.fc1 = nn.Linear(input_dim, hidden_dim)
@@ -42,7 +58,9 @@ class NeuralNet(nn.Module):
 
 
 class Trainer(object):
-    """trains and tests the model"""
+    """
+    Object for training and testing a model.
+    """
     def __init__(self,epoch,model,batch_size):
         self.model = model
         self.epoch = epoch
@@ -191,7 +209,7 @@ def train_and_test(model_type, input_dim, hidden_dim = 200, epochs = 2000, incre
     if model_type == 'nn':
         model = NeuralNet(input_dim,hidden_dim,1)
     if model_type == 'lr':
-        model = LinearRegression(input_dim,1)
+        model = LinearNeuralNet(input_dim,1)
     trainer = Trainer(increment,model,batch_size)
     maes = []
     r2s = []

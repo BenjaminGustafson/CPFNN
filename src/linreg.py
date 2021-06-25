@@ -1,9 +1,16 @@
+"""
+linreg.py
+
+Contains the Linear Regression class.
+"""
 import torch
 import matplotlib.pyplot as plt
 import math
 
 class LinearRegression:
     def fit(self, X, y, method, learning_rate=0.01, iterations=500, batch_size=32, k = 0.01):
+        """
+        """
         X, y = torch.from_numpy(X).float(), torch.from_numpy(y).float()
         X = torch.cat([(X), torch.ones_like(y)], dim=1)
         rows, cols = X.size()
@@ -39,7 +46,6 @@ class LinearRegression:
                                     k))),
                         torch.transpose(X, 0, 1)),
                     y)
-            #line too long^
             else:
                 print('X has not full column rank. method=\'ridge\' cannot be used.')
         elif method == 'sgd':
@@ -86,3 +92,7 @@ class LinearRegression:
             return
         
         return torch.sqrt(torch.mean(torch.square(y_hat - y)))
+
+    def mae(self, X, y):
+        y = torch.from_numpy(y).float()
+
