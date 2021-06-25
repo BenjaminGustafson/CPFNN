@@ -166,7 +166,18 @@ def slice_data(data):
 train = load_training_data()
 test  = load_testing_data()
 
-def train_and_test_NN(input_dim, hidden_dim, epochs, batch_size):#TODO add multiple layers
+def train_and_test_NN(input_dim, hidden_dim, epochs, batch_size, increment):#TODO add multiple layers
+    """
+    Trains a neural network and outputs the model and accuracy.
+
+    Args:
+        input_dim: The number of features to filter. Also the number of nodes in the first layer of the network.
+        hidden_dim: The number of nodes in the hidden layer of the network.
+        epochs: The total number of epochs to train the network for
+
+    Returns:
+
+    """
     indices = get_filtered_indices(input_dim)
     sub_train = train[:,indices]
     sub_test = test[:,indices]
@@ -174,7 +185,8 @@ def train_and_test_NN(input_dim, hidden_dim, epochs, batch_size):#TODO add multi
     sub_test = torch.from_numpy(sub_test).float()
     x_test, y_test = slice_data(sub_test)
     model = NeuralNet(input_dim,hidden_dim,1)
-    trainer = Trainer(epochs,model,batch_size)
+    trainer = Trainer(increment,model,batch_size)
+
     trainer.train_by_random(sub_train)
     mae, r2 = trainer.test(x_test,y_test)
     return model, mae, r2
