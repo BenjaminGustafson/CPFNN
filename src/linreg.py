@@ -27,7 +27,18 @@ class LinearRegression:
             weights = (X^T X + k I_d)^-1 X^T y
             """
             if rows >= cols == torch.matrix_rank(X):
-                self.weights = torch.matmul(torch.matmul(torch.inverse(torch.add(torch.matmul(torch.transpose(X, 0, 1),X),torch.mul(torch.eye(cols,cols),k))),torch.transpose(X, 0, 1),y))
+                self.weights = torch.matmul(
+                    torch.matmul(
+                        torch.inverse(
+                            torch.add(
+                                torch.matmul(
+                                    torch.transpose(X, 0, 1),
+                                    X),
+                                torch.mul(
+                                    torch.eye(cols,cols),
+                                    k))),
+                        torch.transpose(X, 0, 1)),
+                    y)
             #line too long^
             else:
                 print('X has not full column rank. method=\'ridge\' cannot be used.')
