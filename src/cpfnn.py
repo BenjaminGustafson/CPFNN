@@ -65,7 +65,7 @@ class Trainer(object):
         self.model = model
         self.epoch = epoch
         self.optimizer = optim.Adam(self.model.parameters())
-        self.loss_fn = nn.MSELoss()
+        self.loss_fn = nn.L1Loss()
         self.batch_size = batch_size
 
     def train_by_random(self, train):
@@ -184,7 +184,7 @@ def slice_data(data):
 train = load_training_data()
 test  = load_testing_data()
 
-def train_and_test(model_type, input_dim, hidden_dim = 200, epochs = 2000, increment=100, batch_size=20, early_stop = True, stop=0.001):#TODO add multiple layers
+def train_and_test(model_type, input_dim, hidden_dim = 200, epochs = 2000, increment=500, batch_size=20, early_stop = True, stop=0.001):#TODO add multiple layers
     """
     Trains a neural network and outputs the model and accuracy.
 
