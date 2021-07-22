@@ -47,13 +47,14 @@ def train_and_test(num_features, model_type = 'ols', alpha = 1.0):
     test_mae = metrics.mean_absolute_error(y_pred_test,y_test)
     return test_mae
     
-def test_all():
+
+default_ns = [2 ** n for n in range(18)]
+default_alphas = [n/10 for n in range(1,11)]
+def test_all(ns = default_ns, alphas = default_alphas):
     """Performs a series of tests across a range of num_features and alphas.
     
     Exports results to ../data/linreg.csv.
     """
-    ns = [2 ** n for n in range(18)]  # or [1.5 ** n for n in range(1,30)]
-    alphas = [10 ** p for p in range(-3,2)]
     df = pd.DataFrame()
     df['num_features'] = ns
     test_maes = []
