@@ -22,18 +22,16 @@ def load_training_data():
     print("Loading training data...")
     start = time.time()
     train = np.loadtxt(train_file_path, delimiter=',')
-    print("shape = ", train.shape)
     end = time.time()
-    print("Loaded training data. Time (min) = ", (end-start)/60)
+    print(f"Done. Time (min) = {(end-start)/60:.3f}")
     return train
 
 def load_testing_data():
     print("Loading testing data...")
     start = time.time()
     test = np.loadtxt(test_file_path, skiprows=1, delimiter=',')
-    print("shape = ", test.shape)
     end = time.time()
-    print("Loaded testing data. Time (min) = ", (end-start)/60)
+    print(f"Done. Time (min) = {(end-start)/60:.3f}")
     return test
 
 def get_filtered_indices(filter_size, recalc_corr = False, corr_path = corr_path, filter_start = 0):
