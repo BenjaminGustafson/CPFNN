@@ -1,98 +1,46 @@
-"""
-linreg.py
+import dataloader
+from sklearn import linear_model
+from sklearn import metrics
+import pandas as pd
 
-Contains the Linear Regression class.
-"""
-import torch
-import matplotlib.pyplot as plt
-import math
 
-class LinearRegression:
-    def fit(self, X, y, method, learning_rate=0.01, iterations=500, batch_size=32, k = 0.01):
-        """
-        """
-        X, y = torch.from_numpy(X).float(), torch.from_numpy(y).float()
-        X = torch.cat([(X), torch.ones_like(y)], dim=1)
-        rows, cols = X.size()
-        if method == 'solve':
-            """
-            weights = (X^T X)^-1 X^T y
-            """
-            if rows >= cols == torch.matrix_rank(X):
-                self.weights = torch.matmul(
-                    torch.matmul(
-                        torch.inverse(
-                            torch.matmul(
-                                torch.transpose(X, 0, 1),
-                                X)),
-                        torch.transpose(X, 0, 1)),
-                    y)
-            else:
-                print('X has not full column rank. method=\'solve\' cannot be used.')
-        if method == 'ridge':
-            """
-            weights = (X^T X + k I_d)^-1 X^T y
-            """
-            if rows >= cols == torch.matrix_rank(X):
-                self.weights = torch.matmul(
-                    torch.matmul(
-                        torch.inverse(
-                            torch.add(
-                                torch.matmul(
-                                    torch.transpose(X, 0, 1),
-                                    X),
-                                torch.mul(
-                                    torch.eye(cols,cols),
-                                    k))),
-                        torch.transpose(X, 0, 1)),
-                    y)
-            else:
-                print('X has not full column rank. method=\'ridge\' cannot be used.')
-        elif method == 'sgd':
-            self.weights = torch.normal(mean=0, std=1/cols, size=(cols, 1), dtype=torch.float64)
-            for i in range(iterations):
-                Xy = torch.cat([X, y], dim=1)
-                Xy = Xy[torch.randperm(Xy.size()[0])]
-                X, y = torch.split(Xy, [Xy.size()[1]-1, 1], dim=1)
-                for j in range(int(math.ceil(rows/batch_size))):
-                    start, end = batch_size*j, min(batch_size*(j+1), rows)
-                    Xb = torch.index_select(X, 0, torch.arange(start, end))
-                    yb = torch.index_select(y, 0, torch.arange(start, end))
-                    
-                    self.weights.requires_grad_(True)
-                    diff = torch.matmul(Xb, self.weights) - yb
-                    loss = torch.matmul(torch.transpose(diff, 0, 1), diff)
-                    loss.backward()
-                    
-                    self.weights = (self.weights - learning_rate*self.weights.grad).detach()
-        else:
-            print(f'Unknown method: \'{method}\'')
-        
-        return self
+train = dataloader.train
+test = dataloader.test
+
+def train_and_test(num_features, model_type = 'ols', alpha = 1.0):
+    indices = dataloader.get_filtered_indices(num_features)
+    x_train = train[:,indices]
+    y_train = train[:,0]
+    x_test = test[:,indices]
+    y_test = test[:,0]
+    model = linear_model.LinearRegression()
+    if model_type == 'ridge':
+        model = linear_model.Ridge(alpha = alpha)
+    model.fit(x_train, y_train)
+    y_pred_test = model.predict(x_test)
+    test_mae = metrics.mean_absolute_error(y_pred_test,y_test)
+    return test_mae
     
-    def predict(self, X):
-        X = torch.from_numpy(X).float()
-        if not hasattr(self, 'weights'):
-            print('Cannot predict. You should call the .fit() method first.')
-            return
-        
-        X = torch.cat([X, torch.ones((X.size()[0], 1))], dim=1)
-        
-        if X.size()[1] != self.weights.size()[0]:
-            print(f'Shapes do not match. {X.size()[1]} != {self.weights.size()[0]}')
-            return
-        
-        return torch.matmul(X, self.weights)
+def test_all():
+    ns = [2 ** n for n in range(18)]  # or [1.5 ** n for n in range(1,30)]
+    alphas = [10 ** p for p in range(-3,2)]
+    df = pd.DataFrame()
+    df['num_features'] = ns
+    test_maes = []
+    for n in ns:
+        print('training OLS')
+        test_mae = train_and_test(n, 'OLS')
+        test_maes.append(test_mae)
+    df['ols'] = test_maes
+    for alpha in alphas:
+        test_maes = []
+        for n in ns:
+            test_mae = train_and_test(n, 'ridge')
+            test_maes.append(test_mae)
+        df[f'Ridge (alpha={alpha})'] = test_maes
+    df.to_csv('../data/linreg.csv', index=False)
     
-    def rmse(self, X, y):
-        y = torch.from_numpy(y).float()
-        y_hat = self.predict(X)
-        
-        if y_hat is None:
-            return
-        
-        return torch.sqrt(torch.mean(torch.square(y_hat - y)))
 
-    def mae(self, X, y):
-        y = torch.from_numpy(y).float()
 
+
+    
